@@ -32,7 +32,7 @@ export const getExtension = async (
 
 let projectId;
 
-const telemetryInstance = axios.create({
+export const telemetryInstance = axios.create({
   baseURL: "https://rowy.events/",
   timeout: 1000,
   headers: {
@@ -40,29 +40,45 @@ const telemetryInstance = axios.create({
   },
 });
 export const telemetry = async (event) => {
-  if (!projectId) {
-    projectId = await getProjectId();
+  try {
+    if (!projectId) {
+      projectId = await getProjectId();
+    }
+    const body = {
+      projectId,
+      event,
+      source: meta.name,
+    };
+    return await telemetryInstance.post(`monitor`, body);
+  } catch (error: any) {
+    console.warn(
+      `[telemetry] Failed to send telemetry for event '${event}':`,
+      error?.message || error
+    );
+    return null;
   }
-  const body = {
-    projectId,
-    event,
-    source: meta.name,
-  };
-  return telemetryInstance.post(`monitor`, body);
 };
 
 export const telemetryError = async (event, error) => {
-  if (!projectId) {
-    projectId = await getProjectId();
+  try {
+    if (!projectId) {
+      projectId = await getProjectId();
+    }
+    const body = {
+      projectId,
+      event,
+      source: meta.name,
+      error: JSON.stringify(error),
+    };
+    console.log("error", body);
+    return await telemetryInstance.post(`error`, body);
+  } catch (telemetryErr: any) {
+    console.warn(
+      `[telemetryError] Failed to send error telemetry for event '${event}':`,
+      telemetryErr?.message || telemetryErr
+    );
+    return null;
   }
-  const body = {
-    projectId,
-    event,
-    source: meta.name,
-    error: JSON.stringify(error),
-  };
-  console.log("error", body);
-  return telemetryInstance.post(`error`, body);
 };
 
 export const telemetryRuntimeDependencyPerformance = async ({
@@ -72,19 +88,27 @@ export const telemetryRuntimeDependencyPerformance = async ({
   yarnFinishTime,
   dependenciesString,
 }) => {
-  if (!projectId) {
-    projectId = await getProjectId();
+  try {
+    if (!projectId) {
+      projectId = await getProjectId();
+    }
+    const body = {
+      projectId,
+      source: meta.name,
+      functionStartTime,
+      functionEndTime,
+      yarnStartTime,
+      yarnFinishTime,
+      dependenciesString,
+    };
+    return await telemetryInstance.post(`runtime-dependency-performance`, body);
+  } catch (error: any) {
+    console.warn(
+      `[telemetryRuntimeDependencyPerformance] Failed to send dependency telemetry:`,
+      error?.message || error
+    );
+    return null;
   }
-  const body = {
-    projectId,
-    source: meta.name,
-    functionStartTime,
-    functionEndTime,
-    yarnStartTime,
-    yarnFinishTime,
-    dependenciesString,
-  };
-  return telemetryInstance.post(`runtime-dependency-performance`, body);
 };
 
 export const inviteUserService = async (

@@ -60,7 +60,11 @@ const functionWrapper = (fn) => async (req, res) => {
     res.status(200).send(data);
   } catch (error) {
     console.error(error);
-    await telemetryError(req.path.slice(1), error);
+    try {
+      await telemetryError(req.path.slice(1), error);
+    } catch (telemetryErr) {
+      console.warn("[functionWrapper] telemetryError failed:", telemetryErr);
+    }
     res.status(500).send(error);
   }
 };

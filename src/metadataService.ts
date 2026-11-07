@@ -20,8 +20,16 @@ export const getServiceAccountEmail = async () =>
   (
     await axiosInstance.get("computeMetadata/v1/instance/service-accounts")
   ).data.split("\n")[1];
-export const getProjectId = async () =>
-  (await axiosInstance.get("computeMetadata/v1/project/project-id")).data;
+export const getProjectId = async () => {
+  if (process.env.GOOGLE_CLOUD_PROJECT) return process.env.GOOGLE_CLOUD_PROJECT;
+  if (process.env.GCLOUD_PROJECT) return process.env.GCLOUD_PROJECT;
+  if (process.env.PROJECT_ID) return process.env.PROJECT_ID;
+  try {
+    return (await axiosInstance.get("computeMetadata/v1/project/project-id")).data;
+  } catch (e) {
+    return "unknown-project";
+  }
+};
 export const getNumericProjectId = async () =>
   (await axiosInstance.get("computeMetadata/v1/project/numeric-project-id"))
     .data;
