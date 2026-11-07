@@ -72,4 +72,7 @@
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
   }
+,
+  "include": ["src/**/*"],
+  "exclude": ["test", "build", "node_modules"]
 }

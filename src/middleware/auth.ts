@@ -9,10 +9,16 @@ export const requireAuth = async (req: Request, res: any, next: any) => {
     const authToken = authHeader.split(" ")[1];
     const decodedToken = await auth.verifyIdToken(authToken);
     res.locals.user = decodedToken;
-    telemetry(req.path.slice(1));
+    telemetry(req.path.slice(1)).catch((err) => {
+      console.warn(`[auth] telemetry failed:`, err?.message || err);
+    });
     next();
   } catch (error: any) {
-    await telemetryError(req.path.slice(1), error);
+    try {
+      await telemetryError(req.path.slice(1), error);
+    } catch (telemetryErr: any) {
+      console.warn(`[auth] telemetryError failed:`, telemetryErr?.message || telemetryErr);
+    }
     res.sendStatus(401);
   }
 };
@@ -42,7 +48,11 @@ export const hasAnyRole =
         }
       }
     } catch (error) {
-      await telemetryError(req.path.slice(1), error);
+      try {
+        await telemetryError(req.path.slice(1), error);
+      } catch (telemetryErr: any) {
+        console.warn(`[auth] telemetryError failed:`, telemetryErr?.message || telemetryErr);
+      }
       res.status(401);
     }
   };
